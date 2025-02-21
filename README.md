@@ -18,7 +18,7 @@ The primary goal of this project is to:
 ### 🔹 Technologies Covered
 - **Programming Language:** Python  
 - **Frameworks & Libraries:** Django, Django REST Framework (DRF), GraphQL  
-- **Databases:** PostgreSQL, MySQL, Redis  
+- **Databases:** SQLite, MySQL, Redis  
 - **DevOps & CI/CD:** Docker, GitHub Actions, Jenkins  
 - **Message Queues:** RabbitMQ, Celery  
 - **Authentication & Security:** JWT, OAuth  
@@ -39,7 +39,7 @@ The primary goal of this project is to:
 
 | Challenge | Solution |
 |-----------|----------|
-| Implementing efficient **database indexing** | Used **PostgreSQL Indexing** to optimize queries |
+| Implementing efficient **database indexing** | Used **MySQL Indexing** to optimize queries |
 | Managing **concurrent API requests** | Implemented **asynchronous processing** using Celery & RabbitMQ |
 | Securing **APIs and user authentication** | Used **JWT authentication & OAuth** for enhanced security |
 | Handling **large file uploads** in Django | Utilized **cloud storage solutions** (AWS S3, DigitalOcean Spaces) |
