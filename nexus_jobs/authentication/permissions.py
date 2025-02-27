@@ -9,3 +9,8 @@ class IsApplicant(permissions.BasePermission):
     """Only applicants can apply for jobs."""
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role.name == "Applicant"
+    
+class IsAdmin(permissions.BasePermission):
+    """Only applicants can apply for jobs."""
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role.name == "Admin"

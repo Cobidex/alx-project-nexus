@@ -6,17 +6,19 @@ class JobCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = JobCategory
         fields = "__all__"
+        ordering = ["-created_at"]
 
 # Job Serializer
 class JobSerializer(serializers.ModelSerializer):
-    category = JobCategorySerializer(read_only=True)
-    posted_by = serializers.StringRelatedField()  # Display user's email instead of ID
+    posted_by = serializers.StringRelatedField()
 
     class Meta:
         model = Job
         fields = ["id", "title", "description", "company", "location", "category", "posted_by"]
+        ordering = ["-created_at"]
 
 class JobApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobApplication
         fields = '__all__'
+        ordering = ["-created_at"]

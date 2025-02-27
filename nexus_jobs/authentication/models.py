@@ -1,5 +1,5 @@
 import uuid
-from django.contrib.auth.models import AbstractUser, BaseUserManager, Permission
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
@@ -23,6 +23,7 @@ class CustomUserManager(BaseUserManager):
 
 # Role Model
 class Role(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
