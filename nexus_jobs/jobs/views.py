@@ -149,8 +149,7 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         return Response({"message": "Application withdrawn and deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
     def perform_create(self, serializer):
-        resume = self.request.data.get("resume")
-        serializer.save(user=self.request.user, resume=resume)
+        serializer.save(user=self.request.user)
 
 class JobCategoryViewSet(viewsets.ModelViewSet):
     queryset = JobCategory.objects.all()

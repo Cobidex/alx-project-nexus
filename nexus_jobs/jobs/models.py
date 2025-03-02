@@ -1,11 +1,9 @@
-import os
 import uuid
 from django.db import models
-from django.contrib.postgres.search import SearchVector, SearchVectorField
+from django.contrib.postgres.search import SearchVectorField
 from django.db.models import F
 from django.contrib.postgres.indexes import GinIndex
 from authentication.models import User
-from nexus_jobs import settings
 
 # Job Category
 class JobCategory(models.Model):
@@ -53,9 +51,6 @@ class Job(models.Model):
         return self.title
 
 
-def resume_upload_to(instance, filename):
-        return os.path.join('resumes/', filename)
-
 class JobApplication(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pending"),
@@ -68,16 +63,8 @@ class JobApplication(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     job = models.ForeignKey(Job, on_delete=models.CASCADE)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES)
-    resume = models.FileField(upload_to=resume_upload_to)
+    resume = models.CharField(max_length=255)
     applied_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.email} applied for {self.job.title}"
-    
-    def delete(self, *args, **kwargs):
-        """Delete the resume file from storage before deleting the application."""
-        if self.resume:
-            resume_path = os.path.join(settings.MEDIA_ROOT, str(self.resume))
-            if os.path.exists(resume_path):
-                os.remove(resume_path)
-        super().delete(*args, **kwargs)

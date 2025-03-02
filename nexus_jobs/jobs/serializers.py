@@ -39,7 +39,6 @@ class JobSerializer(serializers.ModelSerializer):
         ordering = ["-created_at"]
 
 class JobApplicationSerializer(serializers.ModelSerializer):
-    status = serializers.CharField(read_only=True)
     class Meta:
         model = JobApplication
         fields = '__all__'
