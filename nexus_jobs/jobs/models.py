@@ -47,6 +47,7 @@ class Job(models.Model):
         indexes = [
             GinIndex(fields=["search_vector"], name="search_vector_gin"),
         ]
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.title

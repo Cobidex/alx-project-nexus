@@ -1,7 +1,9 @@
-from django.forms import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.cache import cache
@@ -16,12 +18,9 @@ from .models import Job, JobApplication, JobCategory, Company
 
 # Create your views here.
 class JobViewSet(viewsets.ModelViewSet):
-    queryset = Job.objects.select_related("category", "posted_by").all()
+    queryset = Job.objects.select_related("category", "posted_by", "company").all()
     serializer_class = JobSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["category", "location"]
-    search_fields = ["title", "description", "company"]
-    ordering_fields = ["created_at"]
 
     def get_permissions(self):
         if self.action in ["create", "update", "destroy"]:
@@ -29,7 +28,9 @@ class JobViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def list(self, request, *args, **kwargs):
-        cache_key = "job_list"
+        # Generate a unique cache key based on the request's query params
+        query_params = request.query_params.urlencode()  # Get query string (e.g., "page=2&page_size=10")
+        cache_key = f"job_list_{urlsafe_base64_encode(force_bytes(query_params))}"
         cached_data = cache.get(cache_key)
 
         if cached_data:
@@ -43,7 +44,7 @@ class JobViewSet(viewsets.ModelViewSet):
         try:
             company = get_object_or_404(Company, user=self.request.user)
         except:
-            raise ValidationError({"error": "You must have a company to post a job."})
+            raise APIException({"error": "You must have a company to post a job."})
         serializer.save(posted_by=self.request.user, company=company)
 
     @action(detail=False, methods=["get"], url_path="search")
@@ -107,11 +108,12 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            return [IsAuthenticated(), IsEmployer()]
+            return [IsAuthenticated(), IsApplicant()]
         return [IsAuthenticated()]
 
     def list(self, request, *args, **kwargs):
-        cache_key = "job_application_list"
+        query_params = request.query_params.urlencode()  # Get query string (e.g., "page=2&page_size=10")
+        cache_key = f"job_app_list_{urlsafe_base64_encode(force_bytes(query_params))}"
         cached_data = cache.get(cache_key)
 
         if cached_data:
@@ -147,7 +149,10 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         return Response({"message": "Application withdrawn and deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        print(self.request.user)
+        print("user here")
+        resume = self.request.data.get("resume")
+        serializer.save(user=self.request.user, resume=resume)
 
 class JobCategoryViewSet(viewsets.ModelViewSet):
     queryset = JobCategory.objects.all()
@@ -168,5 +173,4 @@ class CompanyViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
     
     def perform_create(self, serializer):
-        
         serializer.save(user=self.request.user)
