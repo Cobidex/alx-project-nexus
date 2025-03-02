@@ -2,7 +2,6 @@ import uuid
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
 
 # User Manager
 class CustomUserManager(BaseUserManager):
@@ -31,9 +30,10 @@ class Role(models.Model):
 
 # Custom User Model
 class User(AbstractUser):
-    username = None  # Remove username
+    username = None 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
+    saved_jobs = models.ManyToManyField("jobs.Job", related_name="saved_by", blank=True)
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True)
 
     USERNAME_FIELD = "email"

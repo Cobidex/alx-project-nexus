@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import JobCategory, Job, JobApplication
+from .models import Company, JobCategory, Job, JobApplication
+
+class CompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = "__all__"
+        ordering = ["-created_at"]
 
 # Job Category Serializer
 class JobCategorySerializer(serializers.ModelSerializer):
@@ -10,11 +16,26 @@ class JobCategorySerializer(serializers.ModelSerializer):
 
 # Job Serializer
 class JobSerializer(serializers.ModelSerializer):
-    posted_by = serializers.StringRelatedField()
+    posted_by = serializers.PrimaryKeyRelatedField(read_only=True)
+    company = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Job
-        fields = ["id", "title", "description", "company", "location", "category", "posted_by"]
+        fields = [
+            "id",
+            "title",
+            "description",
+            "requirements",
+            "company",
+            "max_salary",
+            "min_salary",
+            "status",
+            "category",
+            "location",
+            "job_type",
+            "posted_by",
+            "created_at",
+        ]
         ordering = ["-created_at"]
 
 class JobApplicationSerializer(serializers.ModelSerializer):
