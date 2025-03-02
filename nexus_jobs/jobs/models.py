@@ -62,7 +62,7 @@ class JobApplication(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     job = models.ForeignKey(Job, on_delete=models.CASCADE)
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="Pending")
     resume = models.CharField(max_length=255)
     applied_at = models.DateTimeField(auto_now_add=True)
 

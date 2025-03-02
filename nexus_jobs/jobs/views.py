@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.cache import cache
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.parsers import MultiPartParser, FormParser
+from django.db.models import Q
 from authentication.permissions import IsAdmin, IsApplicant, IsEmployer
 from rest_framework.permissions import IsAuthenticated
 from authentication.models import User
@@ -104,7 +104,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     filterset_fields = ["job", "user"]
     search_fields = ["job__title"]
     ordering_fields = ["created_at"]
-    parser_classes = (MultiPartParser, FormParser)
 
     def get_permissions(self):
         if self.action == "create":
@@ -125,8 +124,12 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if not isinstance(self.request.user, User):
-            return None
-        return JobApplication.objects.filter(user=self.request.user).select_related("job")
+            return JobApplication.objects.none()
+        
+        return JobApplication.objects.filter(
+            Q(user=self.request.user) |  # Applications made by the user
+            Q(job__posted_by=self.request.user)  # Applications to jobs posted by the user
+        ).select_related("job")
 
     def update(self, request, *args, **kwargs):
         """Allow only the job owner to update status to 'interview', 'accepted', or 'rejected' but not 'withdrawn'."""
