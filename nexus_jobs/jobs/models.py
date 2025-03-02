@@ -33,7 +33,7 @@ class Job(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     max_salary = models.IntegerField()
     min_salary = models.IntegerField()
-    status = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
     category = models.ForeignKey("JobCategory", on_delete=models.CASCADE, null=False)
     location = models.CharField(max_length=100)
     job_type = models.CharField(

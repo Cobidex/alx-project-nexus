@@ -29,7 +29,7 @@ class JobSerializer(serializers.ModelSerializer):
             "company",
             "max_salary",
             "min_salary",
-            "status",
+            "is_active",
             "category",
             "location",
             "job_type",
