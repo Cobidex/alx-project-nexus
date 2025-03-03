@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 
 def create_superuser(apps, schema_editor):
     User = get_user_model()
-    if not User.objects.filter(email="admin@example.com").exists():
+    if not User.objects.filter(email="admin1@example.com").exists():
         User.objects.create_superuser(
             email="admin@example.com",
             password="Admin@123"
