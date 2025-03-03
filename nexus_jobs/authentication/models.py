@@ -33,7 +33,7 @@ class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     saved_jobs = models.ManyToManyField("jobs.Job", related_name="saved_by", blank=True)
-    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True)
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, to_field='name')
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
