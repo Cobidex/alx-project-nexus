@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Company, JobCategory, Job, JobApplication
+from .models import Benefit, Company, Job, JobApplication
 
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,17 +7,16 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = "__all__"
         ordering = ["-created_at"]
 
-# Job Category Serializer
-class JobCategorySerializer(serializers.ModelSerializer):
+class BenefitSerializer(serializers.ModelSerializer):
     class Meta:
-        model = JobCategory
-        fields = "__all__"
-        ordering = ["-created_at"]
+        model = Benefit
+        fields = ["description"]
 
 # Job Serializer
 class JobSerializer(serializers.ModelSerializer):
     posted_by = serializers.PrimaryKeyRelatedField(read_only=True)
     company = serializers.PrimaryKeyRelatedField(read_only=True)
+    benefits = BenefitSerializer(many=True, read_only=True)
 
     class Meta:
         model = Job
@@ -35,6 +34,7 @@ class JobSerializer(serializers.ModelSerializer):
             "job_type",
             "posted_by",
             "created_at",
+            "benefits"
         ]
         ordering = ["-created_at"]
 

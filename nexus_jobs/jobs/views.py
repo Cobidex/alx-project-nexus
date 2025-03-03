@@ -9,12 +9,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.core.cache import cache
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db.models import Q
-from authentication.permissions import IsAdmin, IsApplicant, IsEmployer
+from authentication.permissions import IsApplicant, IsEmployer
 from rest_framework.permissions import IsAuthenticated
 from authentication.models import User
 from .services import JobSearchService
-from .serializers import CompanySerializer, JobApplicationSerializer, JobCategorySerializer, JobSerializer
-from .models import Job, JobApplication, JobCategory, Company
+from .serializers import CompanySerializer, JobApplicationSerializer, JobSerializer
+from .models import Job, JobApplication, Company
 
 # Create your views here.
 class JobViewSet(viewsets.ModelViewSet):
@@ -54,16 +54,28 @@ class JobViewSet(viewsets.ModelViewSet):
         job_type = request.query_params.get("job_type", None)
         location = request.query_params.get("location", None)
         min_salary = request.query_params.get("min_salary", None)
+        experience_level = request.query_params.get("experience_level", None)
 
-        jobs = JobSearchService.search_jobs(query, job_type, location, min_salary)
+        query_params = request.query_params.urlencode()
+        cache_key = f"search_{urlsafe_base64_encode(force_bytes(query_params))}"
+        cached_data = cache.get(cache_key)
+
+        if cached_data:
+            return Response(cached_data)
+
+
+        jobs = JobSearchService.search_jobs(query, job_type, location, min_salary, experience_level)
 
         # Paginate results
         page = self.paginate_queryset(jobs)
         if page is not None:
             serializer = JobSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            response = self.get_paginated_response(serializer.data)
+            cache.set(cache_key, response, timeout=300)
+            return response
 
         serializer = JobSerializer(jobs, many=True)
+        cache.set(cache_key, serializer.data, timeout=300)
         return Response(serializer.data)
     
     @action(detail=False, methods=["get"], permission_classes=[IsApplicant])
@@ -153,15 +165,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-class JobCategoryViewSet(viewsets.ModelViewSet):
-    queryset = JobCategory.objects.all()
-    serializer_class = JobCategorySerializer
-
-    def get_permissions(self):
-        if self.action in ["create", "update", "destroy"]:
-            return [IsAuthenticated(), IsAdmin()]
-        return [IsAuthenticated()]
     
 class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all()

@@ -1,4 +1,6 @@
 from rest_framework import generics, permissions
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
 from .models import User
 import random
 from django.core.mail import send_mail
@@ -70,3 +72,7 @@ class ResetPasswordView(APIView):
                 return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({"error": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer

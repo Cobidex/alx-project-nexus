@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework import serializers
 from rest_framework import serializers
 from .models import Role
 
@@ -21,6 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
 # User Registration Serializer
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    role = serializers.CharField()
 
     class Meta:
         model = User
@@ -29,7 +32,33 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password")
-        user = User.objects.create(**validated_data)
+        role_name = validated_data.pop("role")
+        role = None
+        try:
+            role = Role.objects.get(name=role_name)
+        except Role.DoesNotExist:
+            raise serializers.ValidationError("Role does not exist")
+        user = User.objects.create(**validated_data, role=role)
         user.set_password(password)
         user.save()
         return user
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Custom serializer to return user data along with JWT tokens."""
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # Add custom user details to the response
+        user = self.user
+        data.update({
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "role": user.role.name
+            }
+        })
+        return data

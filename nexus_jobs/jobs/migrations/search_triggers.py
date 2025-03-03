@@ -7,12 +7,13 @@ def enable_pg_extensions(apps, schema_editor):
         cursor.execute("CREATE EXTENSION IF NOT EXISTS unaccent;")
 
 def add_search_vector_column(apps, schema_editor):
-    """Add search_vector column for full-text search."""
+    """Add search_vector and category_text columns for full-text search."""
     with connection.cursor() as cursor:
         cursor.execute("ALTER TABLE jobs_job ADD COLUMN IF NOT EXISTS search_vector tsvector;")
+        cursor.execute("ALTER TABLE jobs_job ADD COLUMN IF NOT EXISTS category_text TEXT;")
 
 def create_search_vector_trigger(apps, schema_editor):
-    """Create a PostgreSQL trigger to update search_vector automatically."""
+    """Create a PostgreSQL trigger to update search_vector and category_text automatically."""
     with connection.cursor() as cursor:
         # Ensure the function does not exist before creating it
         cursor.execute("DROP FUNCTION IF EXISTS update_search_vector CASCADE;")
@@ -20,8 +21,16 @@ def create_search_vector_trigger(apps, schema_editor):
         cursor.execute("""
             CREATE FUNCTION update_search_vector() RETURNS trigger AS $$
             BEGIN
-                NEW.search_vector := setweight(to_tsvector('english', coalesce(NEW.description, '')), 'B') ||
-                                     setweight(to_tsvector('english', coalesce(NEW.requirements, '')), 'C');
+                -- Convert category array to space-separated string
+                NEW.category_text := array_to_string(NEW.categories, ' ');
+                
+                -- Update search_vector with title, description, requirements, and category_text
+                NEW.search_vector := 
+                    setweight(to_tsvector('english', coalesce(NEW.title, '')), 'A') ||
+                    setweight(to_tsvector('english', coalesce(NEW.description, '')), 'B') ||
+                    setweight(to_tsvector('english', coalesce(NEW.requirements, '')), 'C') ||
+                    setweight(to_tsvector('english', coalesce(NEW.category_text, '')), 'D');
+                
                 RETURN NEW;
             END
             $$ LANGUAGE plpgsql;

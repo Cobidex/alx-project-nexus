@@ -1,4 +1,5 @@
 from rest_framework import mixins, viewsets, permissions, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from authentication.serializers import User, UserSerializer
 
@@ -21,6 +22,12 @@ class UserViewSet(mixins.RetrieveModelMixin,
         """Ensure users can only modify their profile unless they are admins."""
         if not request.user.is_staff and obj.id != request.user.id:
             self.permission_denied(request, message="You can only modify your own profile.")
+
+    @action(detail=False, methods=['get'], url_path='me', permission_classes=[permissions.IsAuthenticated])
+    def me(self, request):
+        """Returns the profile of the authenticated user."""
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
