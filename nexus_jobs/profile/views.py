@@ -1,6 +1,8 @@
 from rest_framework import mixins, viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from authentication.serializers import User, UserSerializer
 
 class UserViewSet(mixins.RetrieveModelMixin,
@@ -23,12 +25,22 @@ class UserViewSet(mixins.RetrieveModelMixin,
         if not request.user.is_staff and obj.id != request.user.id:
             self.permission_denied(request, message="You can only modify your own profile.")
 
+    @swagger_auto_schema(
+        method='get',
+        operation_description="Retrieve the profile of the authenticated user.",
+        responses={200: UserSerializer}
+    )
     @action(detail=False, methods=['get'], url_path='me', permission_classes=[permissions.IsAuthenticated])
     def me(self, request):
         """Returns the profile of the authenticated user."""
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        operation_description="Update a user's profile. Password updates are not allowed.",
+        request_body=UserSerializer,
+        responses={200: UserSerializer, 400: "Updating the password field is not allowed."}
+    )
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         self.check_permissions(request, instance)
@@ -38,6 +50,10 @@ class UserViewSet(mixins.RetrieveModelMixin,
 
         return super().update(request, *args, **kwargs)
 
+    @swagger_auto_schema(
+        operation_description="Delete a user profile. Users can only delete their own profile unless they are admins.",
+        responses={204: "Profile deleted successfully."}
+    )
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.check_permissions(request, instance)
