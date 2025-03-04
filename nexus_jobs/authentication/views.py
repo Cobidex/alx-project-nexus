@@ -1,8 +1,7 @@
 from rest_framework import generics, permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
 from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from .serializers import CustomTokenObtainPairSerializer, RegisterSerializer
+from .serializers import RegisterSerializer
 from .models import User
 import random
 from django.core.mail import send_mail
@@ -11,6 +10,16 @@ from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from .docs import (
+    request_password_reset_schema,
+    request_password_reset_responses,
+    reset_password_schema,
+    reset_password_responses,
+    token_obtain_request_schema,
+    token_obtain_response_schema,
+    token_obtain_unauthorized_schema,
+)
+
 
 class RegisterView(generics.CreateAPIView):
     """
@@ -20,24 +29,15 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
 
+
 class RequestPasswordResetView(APIView):
     """
     Generates an OTP and sends it to the user's email for password reset.
     """
 
     @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['email'],
-            properties={
-                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL)
-            }
-        ),
-        responses={
-            200: openapi.Response("OTP sent to email"),
-            400: openapi.Response("Email is required"),
-            404: openapi.Response("User not found")
-        }
+        request_body=request_password_reset_schema,
+        responses=request_password_reset_responses,
     )
     def post(self, request):
         email = request.data.get("email")
@@ -68,20 +68,8 @@ class ResetPasswordView(APIView):
     """
 
     @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['email', 'otp', 'new_password'],
-            properties={
-                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
-                'otp': openapi.Schema(type=openapi.TYPE_INTEGER),
-                'new_password': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        ),
-        responses={
-            200: openapi.Response("Password reset successful"),
-            400: openapi.Response("Invalid or expired OTP"),
-            404: openapi.Response("User not found")
-        }
+        request_body=reset_password_schema,
+        responses=reset_password_responses,
     )
     def post(self, request):
         email = request.data.get("email")
@@ -105,45 +93,17 @@ class ResetPasswordView(APIView):
         return Response({"error": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
     Custom JWT login view that returns user details along with access and refresh tokens.
     """
-    serializer_class = CustomTokenObtainPairSerializer
+    serializer_class = token_obtain_request_schema
 
     @swagger_auto_schema(
-        request_body=CustomTokenObtainPairSerializer,
+        request_body=token_obtain_request_schema,
         responses={
-            200: openapi.Response(
-                description="Successful Login",
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        "access": openapi.Schema(type=openapi.TYPE_STRING, description="JWT access token"),
-                        "refresh": openapi.Schema(type=openapi.TYPE_STRING, description="JWT refresh token"),
-                        "user": openapi.Schema(
-                            type=openapi.TYPE_OBJECT,
-                            properties={
-                                "id": openapi.Schema(type=openapi.TYPE_STRING, format="uuid", description="User UUID"),
-                                "email": openapi.Schema(type=openapi.TYPE_STRING, format="email", description="User email"),
-                                "first_name": openapi.Schema(type=openapi.TYPE_STRING, description="User first name"),
-                                "last_name": openapi.Schema(type=openapi.TYPE_STRING, description="User last name"),
-                                "role": openapi.Schema(type=openapi.TYPE_STRING, description="User role"),
-                            },
-                        ),
-                    },
-                ),
-            ),
-            401: openapi.Response(
-                description="Invalid credentials",
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        "detail": openapi.Schema(type=openapi.TYPE_STRING, description="Error message"),
-                    },
-                ),
-            ),
+            200: token_obtain_response_schema,
+            401: token_obtain_unauthorized_schema,
         },
     )
     def post(self, request, *args, **kwargs):

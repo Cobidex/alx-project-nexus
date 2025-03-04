@@ -2,7 +2,6 @@ from rest_framework import mixins, viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
 from authentication.serializers import User, UserSerializer
 
 class UserViewSet(mixins.RetrieveModelMixin,
