@@ -177,3 +177,36 @@ class CompanyViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+from rest_framework import mixins, viewsets, permissions
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Benefit, Job
+from .serializers import BenefitSerializer
+
+class BenefitViewSet(mixins.CreateModelMixin,
+                     mixins.DestroyModelMixin,
+                     viewsets.GenericViewSet):
+    """
+    ViewSet for creating and deleting Benefit instances.
+    Only the job poster can add benefits.
+    """
+    queryset = Benefit.objects.all()
+    serializer_class = BenefitSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        """Ensure only the job poster can add benefits."""
+        job_id = serializer.validated_data['job']
+        job = Job.objects.get(id=job_id)
+        if job.posted_by != self.request.user.id:
+            return Response({"error": "You can only add benefits to jobs you posted."}, status=status.HTTP_403_FORBIDDEN)
+        serializer.save()
+
+    def destroy(self, request, *args, **kwargs):
+        """Ensure only the job poster can delete benefits."""
+        benefit = self.get_object()
+        if benefit.job.posted_by != request.user.id:
+            return Response({"error": "You can only delete benefits from jobs you posted."}, status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)

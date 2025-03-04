@@ -33,7 +33,7 @@ class Job(models.Model):
     max_salary = models.IntegerField()
     min_salary = models.IntegerField()
     is_active = models.BooleanField(default=True)
-    categories = ArrayField(models.CharField(max_length=100), blank=True, default=list)
+    category = ArrayField(models.CharField(max_length=100), blank=True, default=list)
     location = models.CharField(max_length=100)
     job_type = models.CharField(
         max_length=50, choices=[("Full-time", "Full-time"), ("Part-time", "Part-time")]
