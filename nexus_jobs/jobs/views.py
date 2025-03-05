@@ -199,6 +199,17 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
             Q(job__posted_by=self.request.user)
         ).select_related("job")
 
+    @swagger_auto_schema(responses={200: JobApplicationSerializer(many=True)})
+    @action(detail=False, methods=["get"], permission_classes=[IsEmployer])
+    def employer_applications(self, request):
+        """
+        Retrieve all applications to jobs posted by the authenticated employer.
+        """
+        jobs_posted_by_user = Job.objects.filter(posted_by=request.user)
+        applications = JobApplication.objects.filter(job__in=jobs_posted_by_user).select_related("job", "user")
+        serializer = self.get_serializer(applications, many=True)
+        return Response(serializer.data)
+
     def update(self, request, *args, **kwargs):
         """Allow only job owners to update application status."""
         application = self.get_object()
