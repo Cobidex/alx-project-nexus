@@ -1,0 +1,1 @@
+from jobs.serializers import CompanySerializer

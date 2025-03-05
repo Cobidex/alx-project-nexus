@@ -65,7 +65,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 "last_name": user.last_name,
                 "role": user.role.name,
                 "company": CompanySerializer(getattr(user, "company", None), context=self.context).data if hasattr(user, "company") else None
-
             }
         })
         return data

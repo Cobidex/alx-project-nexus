@@ -15,7 +15,7 @@ class JobDetailSerializer(serializers.ModelSerializer):
 # Job Serializer
 class JobSerializer(serializers.ModelSerializer):
     posted_by = serializers.PrimaryKeyRelatedField(read_only=True)
-    company = serializers.PrimaryKeyRelatedField(read_only=True)
+    company = CompanySerializer(read_only=True)
     details = JobDetailSerializer(many=True, read_only=True)
 
     class Meta:
@@ -38,11 +38,14 @@ class JobSerializer(serializers.ModelSerializer):
         ordering = ["-created_at"]
 
 class JobApplicationSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
     job = JobSerializer(read_only=True)
     status = serializers.ReadOnlyField()
+    user_name = serializers.SerializerMethodField()
 
     class Meta:
         model = JobApplication
-        fields = '__all__'
+        fields = ["id", "user_name", "job", "status", "resume", "cover_letter", "applied_at"]
         ordering = ["-created_at"]
+
+    def get_user_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}"
