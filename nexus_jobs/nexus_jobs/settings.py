@@ -141,7 +141,7 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
 }
-"""
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -160,7 +160,7 @@ LOGGING = {
         },
     },
 }
-"""
+
 
 WSGI_APPLICATION = 'nexus_jobs.wsgi.application'
 
