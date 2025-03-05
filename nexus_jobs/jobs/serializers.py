@@ -39,6 +39,7 @@ class JobSerializer(serializers.ModelSerializer):
 
 class JobApplicationSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
+    job = JobSerializer(read_only=True)
     status = serializers.ReadOnlyField()
 
     class Meta:

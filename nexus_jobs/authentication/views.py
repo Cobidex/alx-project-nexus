@@ -56,7 +56,7 @@ class RequestPasswordResetView(APIView):
         send_mail(
             subject="Password Reset OTP",
             message=f"Your password reset OTP is {otp}. It will expire in 5 minutes.",
-            from_email="no-reply@example.com",
+            from_email="team@medukul.com",
             recipient_list=[email],
         )
 

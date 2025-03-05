@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from rest_framework import serializers
+
+from jobs.serializers import CompanySerializer
 from .models import Role
 
 User = get_user_model()
@@ -15,6 +17,7 @@ class RoleSerializer(serializers.ModelSerializer):
 # User Serializer
 class UserSerializer(serializers.ModelSerializer):
     role = RoleSerializer(read_only=True)
+    company = CompanySerializer(read_only=True)
 
     class Meta:
         model = User
@@ -53,14 +56,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Get the authenticated user
         user = self.user
 
-        # Fetch the company associated with the user (if any)
-        company = None
-        if hasattr(user, "company"):
-            company = {
-                "id": user.company.id,
-                "name": user.company.name
-            } if user.company else None
-
         # Add user details to the response
         data.update({
             "user": {
@@ -69,7 +64,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "role": user.role.name,
-                "company": company
+                "company": CompanySerializer(getattr(user, "company", None), context=self.context).data if hasattr(user, "company") else None
+
             }
         })
         return data

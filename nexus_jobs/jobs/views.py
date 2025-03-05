@@ -4,7 +4,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -70,7 +70,7 @@ class JobViewSet(viewsets.ModelViewSet):
         try:
             company = get_object_or_404(Company, user=self.request.user)
         except:
-            raise APIException({"error": "You must have a company to post a job."})
+            raise ValidationError({"error": "You must have a company to post a job."})
         serializer.save(posted_by=self.request.user, company=company)
     
     @swagger_auto_schema(
@@ -222,6 +222,9 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
 
         if job.deadline and job.deadline < timezone.now():
             return Response({"error": "The application deadline for this job has passed."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if JobApplication.objects.filter(user=self.request.user, job=job).exists():
+            raise ValidationError({"error": "You have already applied for this job."})
 
         serializer.save(user=self.request.user, job=job)
 
@@ -242,7 +245,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user_companies = Company.objects.filter(user=self.request.user)
         if user_companies.exists():
-            raise APIException({"error": "You can only have one company."})
+            raise ValidationError({"error": "You can only have one company."})
         serializer.save(user=self.request.user)
 
 class JobDetailViewSet(viewsets.ModelViewSet):
