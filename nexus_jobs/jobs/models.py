@@ -49,7 +49,16 @@ class Job(models.Model):
     category = ArrayField(models.CharField(max_length=100), blank=True, default=list)
     location = models.CharField(max_length=100)
     job_type = models.CharField(
-        max_length=50, choices=[("Full-time", "Full-time"), ("Part-time", "Part-time")]
+        max_length=50,
+        choices=[
+            ("Full-time", "Full-time"),
+            ("Part-time", "Part-time"),
+            ("Remote", "Remote"),
+            ("Hybrid", "Hybrid"),
+            ("Contract", "Contract"),
+            ("Freelance", "Freelance"),
+            ("Internship", "Internship")
+        ]
     )
     posted_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)

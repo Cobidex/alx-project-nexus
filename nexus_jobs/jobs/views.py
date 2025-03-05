@@ -39,7 +39,7 @@ class JobViewSet(viewsets.ModelViewSet):
         - `create`, `update`, `destroy`, and `retrieve` require authentication.
         - `create`, `update`, `destroy` require the user to be an employer.
         """
-        if self.action in ["list", "search_jobs"]:
+        if self.action in ["list", "search_jobs", "retrieve"]:
             return [AllowAny()]  # Public access
         if self.action in ["create", "update", "destroy"]:
             return [IsAuthenticated(), IsEmployer()]  # Restricted to authenticated employers
