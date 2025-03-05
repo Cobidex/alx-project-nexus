@@ -29,8 +29,8 @@ class JobSerializer(serializers.ModelSerializer):
             "min_salary",
             "is_active",
             "category",
-            "experience_level"
-            "deadline"
+            "experience_level",
+            "deadline",
             "location",
             "job_type",
             "posted_by",
