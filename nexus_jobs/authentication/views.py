@@ -34,6 +34,7 @@ class RequestPasswordResetView(APIView):
     """
     Generates an OTP and sends it to the user's email for password reset.
     """
+    permission_classes = [permissions.AllowAny]
 
     @swagger_auto_schema(
         request_body=request_password_reset_schema,
@@ -66,6 +67,7 @@ class ResetPasswordView(APIView):
     """
     Allows a user to reset their password after verifying the OTP.
     """
+    permission_classes = [permissions.AllowAny]
 
     @swagger_auto_schema(
         request_body=reset_password_schema,

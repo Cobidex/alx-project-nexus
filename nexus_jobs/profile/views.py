@@ -19,10 +19,11 @@ class UserViewSet(mixins.RetrieveModelMixin,
         """Restrict non-admin users to only their own profile."""
         return self.queryset if self.request.user.is_staff else self.queryset.filter(id=self.request.user.id)
 
-    def check_permissions(self, request, obj):
+    def check_permissions(self, request, obj=None):
         """Ensure users can only modify their profile unless they are admins."""
-        if not request.user.is_staff and obj.id != request.user.id:
+        if obj is not None and not request.user.is_staff and obj.id != request.user.id:
             self.permission_denied(request, message="You can only modify your own profile.")
+
 
     @swagger_auto_schema(
         method='get',

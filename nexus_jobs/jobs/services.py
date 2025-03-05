@@ -1,5 +1,5 @@
 from django.contrib.postgres.search import SearchQuery, SearchRank, TrigramSimilarity
-from django.db.models import F, Q, Func
+from django.db.models import F, Q
 from .models import Job
 
 class JobSearchService:
@@ -23,7 +23,7 @@ class JobSearchService:
             Q(search_vector=search_query) |  # Full-text search in description
             Q(title_similarity__gt=0.2) |  # Trigram similarity filter on title
             Q(location_similarity__gt=0.2) |  # Trigram similarity filter on location
-            Q(categories__contains=[query])  # Trigram similarity filter on location
+            Q(category__contains=[query])  # Trigram similarity filter on location
         )
 
         # Apply additional filters

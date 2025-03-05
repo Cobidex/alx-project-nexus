@@ -1,11 +1,5 @@
 from django.db import migrations, connection
 
-def enable_pg_extensions(apps, schema_editor):
-    """Enable required PostgreSQL extensions."""
-    with connection.cursor() as cursor:
-        cursor.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
-        cursor.execute("CREATE EXTENSION IF NOT EXISTS unaccent;")
-
 def add_search_vector_column(apps, schema_editor):
     """Add search_vector and category_text columns for full-text search."""
     with connection.cursor() as cursor:
@@ -22,13 +16,12 @@ def create_search_vector_trigger(apps, schema_editor):
             CREATE FUNCTION update_search_vector() RETURNS trigger AS $$
             BEGIN
                 -- Convert category array to space-separated string
-                NEW.category_text := array_to_string(NEW.categories, ' ');
-                
-                -- Update search_vector with title, description, requirements, and category_text
+                NEW.category_text := array_to_string(NEW.category, ' ');
+
+                -- Update search_vector with title, description, and category_text
                 NEW.search_vector := 
                     setweight(to_tsvector('english', coalesce(NEW.title, '')), 'A') ||
                     setweight(to_tsvector('english', coalesce(NEW.description, '')), 'B') ||
-                    setweight(to_tsvector('english', coalesce(NEW.requirements, '')), 'C') ||
                     setweight(to_tsvector('english', coalesce(NEW.category_text, '')), 'D');
                 
                 RETURN NEW;
@@ -52,7 +45,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(enable_pg_extensions),
         migrations.RunPython(add_search_vector_column),
         migrations.RunPython(create_search_vector_trigger),
     ]

@@ -1,18 +1,20 @@
+from datetime import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from rest_framework.exceptions import APIException
-from rest_framework import mixins, viewsets, permissions
+from rest_framework import viewsets, permissions
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import BenefitSerializer
+from .serializers import JobDetailSerializer
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.cache import cache
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.db.models import Q
@@ -20,19 +22,27 @@ from authentication.permissions import IsApplicant, IsEmployer
 from authentication.models import User
 from .services import JobSearchService
 from .serializers import CompanySerializer, JobApplicationSerializer, JobSerializer
-from .models import Job, Company, JobApplication, Benefit
+from .models import Job, Company, JobApplication, JobDetail
 
 class JobViewSet(viewsets.ModelViewSet):
     """
     API endpoint for managing job listings.
     """
-    queryset = Job.objects.select_related("category", "posted_by", "company").all()
+    queryset = Job.objects.select_related("posted_by", "company").all()
     serializer_class = JobSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
 
     def get_permissions(self):
+        """
+        Set permissions: 
+        - `list` and `search_jobs` are public.
+        - `create`, `update`, `destroy`, and `retrieve` require authentication.
+        - `create`, `update`, `destroy` require the user to be an employer.
+        """
+        if self.action in ["list", "search_jobs"]:
+            return [AllowAny()]  # Public access
         if self.action in ["create", "update", "destroy"]:
-            return [IsAuthenticated(), IsEmployer()]
+            return [IsAuthenticated(), IsEmployer()]  # Restricted to authenticated employers
         return [IsAuthenticated()]
 
     @swagger_auto_schema(responses={200: JobSerializer(many=True)})
@@ -56,6 +66,7 @@ class JobViewSet(viewsets.ModelViewSet):
         """
         Create a new job posting. Only employers can post jobs.
         """
+        company = Company.objects.filter(user=self.request.user)
         try:
             company = get_object_or_404(Company, user=self.request.user)
         except:
@@ -97,7 +108,7 @@ class JobViewSet(viewsets.ModelViewSet):
         if page is not None:
             serializer = JobSerializer(page, many=True)
             response = self.get_paginated_response(serializer.data)
-            cache.set(cache_key, response, timeout=300)
+            cache.set(cache_key, serializer.data , timeout=300)
             return response
 
         serializer = JobSerializer(jobs, many=True)
@@ -206,7 +217,13 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         return Response({"message": "Application withdrawn successfully."}, status=status.HTTP_204_NO_CONTENT)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        job_id = self.request.data.get('job')
+        job = get_object_or_404(Job, id=job_id)
+
+        if job.deadline and job.deadline < timezone.now():
+            return Response({"error": "The application deadline for this job has passed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save(user=self.request.user, job=job)
 
 class CompanyViewSet(viewsets.ModelViewSet):
     """
@@ -223,32 +240,58 @@ class CompanyViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
     
     def perform_create(self, serializer):
+        user_companies = Company.objects.filter(user=self.request.user)
+        if user_companies.exists():
+            raise APIException({"error": "You can only have one company."})
         serializer.save(user=self.request.user)
 
-class BenefitViewSet(mixins.CreateModelMixin,
-                     mixins.DestroyModelMixin,
-                     viewsets.GenericViewSet):
+class JobDetailViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for managing job benefits.
-    - Job posters can add or remove benefits.
+    ViewSet for creating and deleting job details.
+    - Only job posters can add or delete details.
     """
-    queryset = Benefit.objects.all()
-    serializer_class = BenefitSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    queryset = JobDetail.objects.all()
+    serializer_class = JobDetailSerializer
+    permission_classes = [IsAuthenticated, IsEmployer]
 
-    def perform_create(self, serializer):
-        """Ensure only the job poster can add benefits."""
-        job_id = serializer.validated_data['job']
-        job = Job.objects.get(id=job_id)
-        if job.posted_by != self.request.user.id:
-            return Response({"error": "You can only add benefits to jobs you posted."},
-                            status=status.HTTP_403_FORBIDDEN)
-        serializer.save()
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            job_id = request.data["job"]
+            job = get_object_or_404(Job, id=job_id)
+
+            if job.posted_by != request.user:
+                return Response(
+                    {"error": "You can only add details to jobs you posted."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            job_detail = serializer.save()
+            job.details.add(job_detail)
+            job.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, *args, **kwargs):
-        """Ensure only the job poster can delete benefits."""
-        benefit = self.get_object()
-        if benefit.job.posted_by != request.user.id:
-            return Response({"error": "You can only delete benefits from jobs you posted."},
-                            status=status.HTTP_403_FORBIDDEN)
-        return super().destroy(request, *args, **kwargs)
+        job_detail = self.get_object()
+        if job_detail.job.posted_by != request.user:
+            return Response(
+                {"error": "You can only delete details from jobs you posted."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        job_detail.delete()
+        return Response({"message": "Deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+    def list(self, request, *args, **kwargs):
+        return Response({"error": "Method Not Allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response({"error": "Method Not Allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def update(self, request, *args, **kwargs):
+        return Response({"error": "Method Not Allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def partial_update(self, request, *args, **kwargs):
+        return Response({"error": "Method Not Allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

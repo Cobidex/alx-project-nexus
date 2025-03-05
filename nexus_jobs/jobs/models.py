@@ -9,18 +9,30 @@ from authentication.models import User
 class Company(models.Model):
      id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
      name = models.CharField(max_length=255)
-     user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, editable=False)
+     user = models.OneToOneField(User, on_delete=models.CASCADE, null=False, editable=False)
 
      def __str__(self):
           return super().__str__()
+     
+class JobDetail(models.Model):
+    DETAIL_CHOICES = [
+        ("Responsibilities", "Responsibilities"),
+        ("Benefits", "Benefits"),
+        ("Requirements", "Requirements")
+    ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    description = models.TextField()
+    type = models.CharField(choices=DETAIL_CHOICES, null=False)
+
+    def __str__(self):
+        return self.description
 
 class Job(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255)
     description = models.TextField()
-    responsibilities = models.TextField(null=True)
-    requirements = models.TextField()
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    company = models.OneToOneField(Company, on_delete=models.CASCADE)
+    details = models.ManyToManyField(JobDetail, blank=True)
     experience_level = models.CharField(
         max_length=50,
         choices=[
@@ -31,6 +43,7 @@ class Job(models.Model):
         default="Entry-level"
     )
     max_salary = models.IntegerField()
+    deadline = models.DateTimeField(null=True, blank=True)
     min_salary = models.IntegerField()
     is_active = models.BooleanField(default=True)
     category = ArrayField(models.CharField(max_length=100), blank=True, default=list)
@@ -52,14 +65,6 @@ class Job(models.Model):
 
     def __str__(self):
         return self.title
-    
-class Benefit(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    description = models.TextField()
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, null=False)
-
-    def __str__(self):
-        return self.name
 
 
 class JobApplication(models.Model):
@@ -73,7 +78,7 @@ class JobApplication(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     job = models.ForeignKey(Job, on_delete=models.CASCADE)
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="Pending")
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="pending")
     resume = models.CharField(max_length=255)
     cover_letter = models.TextField(null=True)
     applied_at = models.DateTimeField(auto_now_add=True)

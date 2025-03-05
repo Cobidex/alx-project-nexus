@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name", "role"]
+        fields = ["id", "email", "first_name", "last_name", "role", "company"]
 
 # User Registration Serializer
 class RegisterSerializer(serializers.ModelSerializer):
@@ -50,15 +50,27 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        # Add custom user details to the response
+        # Get the authenticated user
         user = self.user
+
+        # Fetch the company associated with the user (if any)
+        company = None
+        if hasattr(user, "company"):
+            company = {
+                "id": user.company.id,
+                "name": user.company.name
+            } if user.company else None
+
+        # Add user details to the response
         data.update({
             "user": {
                 "id": user.id,
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
-                "role": user.role.name
+                "role": user.role.name,
+                "company": company
             }
         })
         return data
+
