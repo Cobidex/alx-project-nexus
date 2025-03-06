@@ -228,7 +228,7 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         return Response({"message": "Application withdrawn successfully."}, status=status.HTTP_204_NO_CONTENT)
 
     def perform_create(self, serializer):
-        job_id = self.request.data.get('job')
+        job_id = self.request.data.get('job_id')
         job = get_object_or_404(Job, id=job_id)
 
         if job.deadline and job.deadline < timezone.now():
@@ -271,7 +271,7 @@ class JobDetailViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            job_id = request.data["job"]
+            job_id = request.data["job_id"]
             job = get_object_or_404(Job, id=job_id)
 
             if job.posted_by != request.user:

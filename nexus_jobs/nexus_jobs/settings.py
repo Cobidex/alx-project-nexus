@@ -107,6 +107,7 @@ TEMPLATES = [
 ]
 
 REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "errors.exception_handler.custom_exception_handler",
     'DEFAULT_RENDERER_CLASSES': (
         'middlewares.response_formater.CustomJSONRenderer',
     ),

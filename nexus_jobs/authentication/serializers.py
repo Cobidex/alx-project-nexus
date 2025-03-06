@@ -16,6 +16,7 @@ class RoleSerializer(serializers.ModelSerializer):
 
 # User Serializer
 class UserSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(write_only=True)
     role = RoleSerializer(read_only=True)
     company = CompanySerializer(read_only=True)
 

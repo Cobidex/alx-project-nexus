@@ -2,18 +2,23 @@ from rest_framework import serializers
 from .models import Company, Job, JobApplication, JobDetail
 
 class CompanySerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(write_only=True)
     class Meta:
         model = Company
         fields = "__all__"
         ordering = ["-created_at"]
 
 class JobDetailSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(write_only=True)
+    job_id = serializers.UUIDField(write_only=True)
+
     class Meta:
         model = JobDetail
-        fields = ["description", "type"]
+        fields = ["description", "type", "job_id", "id"]
 
 # Job Serializer
 class JobSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(write_only=True)
     posted_by = serializers.PrimaryKeyRelatedField(read_only=True)
     company = CompanySerializer(read_only=True)
     details = JobDetailSerializer(many=True, read_only=True)
@@ -40,13 +45,15 @@ class JobSerializer(serializers.ModelSerializer):
         ordering = ["-created_at"]
 
 class JobApplicationSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(write_only=True)
     job = JobSerializer(read_only=True)
+    job_id = serializers.UUIDField(write_only=True)
     status = serializers.ReadOnlyField()
     user_name = serializers.SerializerMethodField()
 
     class Meta:
         model = JobApplication
-        fields = ["id", "user_name", "job", "status", "resume", "cover_letter", "applied_at"]
+        fields = ["id", "user_name", "job", "job_id", "status", "resume", "cover_letter", "applied_at"]
         ordering = ["-created_at"]
 
     def get_user_name(self, obj):
