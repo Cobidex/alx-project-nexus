@@ -10,13 +10,14 @@ User = get_user_model()
 
 # Role Serializer
 class RoleSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(format='hex_verbose')
     class Meta:
         model = Role
         fields = "__all__"
 
 # User Serializer
 class UserSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(write_only=True)
+    id = serializers.UUIDField(format='hex_verbose')
     role = RoleSerializer(read_only=True)
     company = CompanySerializer(read_only=True)
 

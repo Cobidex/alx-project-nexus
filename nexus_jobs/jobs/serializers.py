@@ -2,14 +2,14 @@ from rest_framework import serializers
 from .models import Company, Job, JobApplication, JobDetail
 
 class CompanySerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(write_only=True)
+    id = serializers.UUIDField(format='hex_verbose')
     class Meta:
         model = Company
         fields = "__all__"
         ordering = ["-created_at"]
 
 class JobDetailSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(write_only=True)
+    id = serializers.UUIDField(format='hex_verbose')
     job_id = serializers.UUIDField(write_only=True)
 
     class Meta:
@@ -18,7 +18,7 @@ class JobDetailSerializer(serializers.ModelSerializer):
 
 # Job Serializer
 class JobSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(write_only=True)
+    id = serializers.UUIDField(format='hex_verbose')
     posted_by = serializers.PrimaryKeyRelatedField(read_only=True)
     company = CompanySerializer(read_only=True)
     details = JobDetailSerializer(many=True, read_only=True)
@@ -45,7 +45,7 @@ class JobSerializer(serializers.ModelSerializer):
         ordering = ["-created_at"]
 
 class JobApplicationSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(write_only=True)
+    id = serializers.UUIDField(format='hex_verbose')
     job = JobSerializer(read_only=True)
     job_id = serializers.UUIDField(write_only=True)
     status = serializers.ReadOnlyField()
