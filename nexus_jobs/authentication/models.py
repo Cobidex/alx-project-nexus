@@ -31,7 +31,12 @@ class CustomUserManager(BaseUserManager):
 # Role Model
 class Role(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255, unique=True)
+    ROLE_CHOICES = [
+        ('Admin', 'Admin'),
+        ('Applicant', 'Applicant'),
+        ('Employer', 'Employer'),
+    ]
+    name = models.CharField(max_length=255, unique=True, choices=ROLE_CHOICES)
 
     def __str__(self):
         return self.name
