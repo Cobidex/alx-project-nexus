@@ -2,14 +2,12 @@ from rest_framework import serializers
 from .models import Company, Job, JobApplication, JobDetail
 
 class CompanySerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(format='hex_verbose')
     class Meta:
         model = Company
         fields = "__all__"
         ordering = ["-created_at"]
 
 class JobDetailSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(format='hex_verbose')
     job_id = serializers.UUIDField(write_only=True)
 
     class Meta:
