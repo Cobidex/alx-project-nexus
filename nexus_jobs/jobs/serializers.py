@@ -16,7 +16,6 @@ class JobDetailSerializer(serializers.ModelSerializer):
 
 # Job Serializer
 class JobSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(format='hex_verbose')
     posted_by = serializers.PrimaryKeyRelatedField(read_only=True)
     company = CompanySerializer(read_only=True)
     details = JobDetailSerializer(many=True, read_only=True)
