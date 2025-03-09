@@ -18,6 +18,7 @@ from .docs import (
     token_obtain_request_schema,
     token_obtain_response_schema,
     token_obtain_unauthorized_schema,
+    register_view_docs
 )
 
 
@@ -28,6 +29,11 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+
+    @register_view_docs
+    def post(self, request, *args, **kwargs):
+        """Handles user registration"""
+        return super().post(request, *args, **kwargs)
 
 
 class RequestPasswordResetView(APIView):

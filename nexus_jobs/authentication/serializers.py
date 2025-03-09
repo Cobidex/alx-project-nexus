@@ -38,6 +38,8 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop("password")
         role_name = validated_data.pop("role")
+        if role_name not in ["Applicant", "Employer"]:
+            raise serializers.ValidationError("Invalid role. Must be 'Applicant' or 'Employer'.")
         role = None
         try:
             role = Role.objects.get(name=role_name)

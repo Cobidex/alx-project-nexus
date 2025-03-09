@@ -5,7 +5,7 @@ class CustomJSONRenderer(JSONRenderer):
         response = renderer_context.get('response', None)
         status_code = response.status_code if response else 200
 
-        # Handle error responses
+        # Ensure data is a dictionary
         if not isinstance(data, dict):
             data = {"message": data}
 
@@ -13,7 +13,7 @@ class CustomJSONRenderer(JSONRenderer):
             response_data = {
                 "status": "error",
                 "message": data.get("detail", "An error occurred"),
-                "errors": data["errors"] if "detail" not in data else None,
+                "errors": data.get("errors") or {key: value for key, value in data.items() if key != "detail"},
             }
         else:
             response_data = {
