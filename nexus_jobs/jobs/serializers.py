@@ -42,7 +42,6 @@ class JobSerializer(serializers.ModelSerializer):
         ordering = ["-created_at"]
 
 class JobApplicationSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(format='hex_verbose')
     job = JobSerializer(read_only=True)
     job_id = serializers.UUIDField(write_only=True)
     status = serializers.ReadOnlyField()
